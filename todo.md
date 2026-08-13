@@ -41,3 +41,9 @@
 - [x] Add a GitHub Pages workflow and deployment guidance for the user’s future repository
 - [x] Validate the production browser build and static asset paths
 - [x] Define browser-only document import boundaries and GitHub Pages static architecture
+- [x] Apply and document the GitHub Pages Metro workspace-root export workaround
+- [x] Remove NativeWind filesystem-cache output for static Metro exports
+- [x] Define broader transparent signals for markdown artifacts, structural regularity, and polished template language
+- [x] Add deterministic follow-up markers for the expanded signal set
+- [x] Add representative tests for polished and markdown-formatted essay patterns
+- [x] Update findings copy to clarify that zero matches does not verify human authorship

@@ -31,6 +31,8 @@ EXPO_PUBLIC_BASE_URL=/essay-sentinel pnpm export:web
 npx expo serve
 ```
 
+If Metro reports a `react-native-css-interop/.cache/web.css` SHA-1 error, set `EXPO_NO_METRO_WORKSPACE_ROOT=1` for the export. The included GitHub Actions workflow already supplies this setting.
+
 Open the local URL shown by the final command. For a different repository name, replace `/essay-sentinel` with that repository’s name. The static output is written to `dist/`; do not edit its generated files directly.
 
 ## Use on a Phone

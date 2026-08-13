@@ -94,4 +94,30 @@ describe("deterministic essay marker analysis", () => {
     expect(result.findings[0].id).toBe("custom-assignment-phrases");
     expect(result.findings[0].phrase).toBe("the evidence clearly shows");
   });
+
+  it("surfaces raw Markdown heading artifacts left in a polished copied response", () => {
+    const result = analyzeEssay(
+      "### The Value of Community Gardens\n\n" +
+        "It is crucial to recognize that community gardens create more than a space for vegetables. " +
+        "At its core, the project connects neighbors through shared work and conversation.\n\n" +
+        "### A Shared Responsibility\n\n" +
+        "The garden serves as a reminder that public spaces improve when people contribute time and care. " +
+        "Students can interview volunteers, observe a work day, and explain how one example supports the larger claim.",
+    );
+
+    const markdown = result.findings.find((item) => item.id === "markdown-heading-artifacts");
+    expect(markdown?.count).toBe(2);
+    expect(markdown?.phrase).toContain("###");
+    expect(result.level).toBe("some");
+    expect(result.revisionGuidanceSuggested).toBe(true);
+    expect(result.recommendations[0].id).toBe("remove-drafting-format");
+  });
+
+  it("explains that a zero-match result does not verify human authorship", () => {
+    const minimalRuleSet = { ...SYSTEM_DEFAULT_RULE_SET, enabledBaseRuleIds: [], customPhrases: [] };
+    const result = analyzeEssay("A short original response can describe a class observation and name one change the writer would make after discussion.", minimalRuleSet);
+
+    expect(result.findings).toHaveLength(0);
+    expect(result.recommendations[0].detail).toMatch(/does not verify human authorship/i);
+  });
 });
