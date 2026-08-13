@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-            - name: Export static website
+      - name: Export static website
         env:
           EXPO_PUBLIC_BASE_URL: /${{ github.event.repository.name }}
           EXPO_NO_METRO_WORKSPACE_ROOT: "1"
