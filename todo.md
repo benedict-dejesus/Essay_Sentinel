@@ -47,3 +47,15 @@
 - [x] Add deterministic follow-up markers for the expanded signal set
 - [x] Add representative tests for polished and markdown-formatted essay patterns
 - [x] Update findings copy to clarify that zero matches does not verify human authorship
+- [x] Diagnose browser delete-confirmation failures for saved reviews and custom rule sets
+- [x] Replace incompatible delete confirmations with browser-safe interaction flows
+- [x] Test deletion persistence for reviews and rule sets
+- [x] Define transparent grammar, vocabulary, cohesion, and polished-structure follow-up indicators
+- [x] Add deterministic polished-writing marker categories and recommendations
+- [x] Verify browser-safe delete controls in the static web build
+- [x] Create a clean repository replacement ZIP without dependencies or generated files
+- [x] Define exact LLM buzzword and tapestry/odyssey phrase signals with transparent rationales
+- [x] Define rigid academic-proposal and fragmented multi-document formatting signals
+- [x] Implement the new language and structure marker categories with revision prompts
+- [x] Test representative LLM-buzzword, templated proposal, and fragmented document submissions
+- [ ] Package an updated repository replacement ZIP

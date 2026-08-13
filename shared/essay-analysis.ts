@@ -86,6 +86,31 @@ const CONCLUSION_TEMPLATE: PhraseRule = {
 
 const TRANSITIONS = ["moreover", "furthermore", "additionally", "consequently", "thus", "therefore"];
 const BALANCE_PATTERNS = ["not only", "whether", "on the one hand"];
+const ELEVATED_ACADEMIC_TERMS = ["ambiguous", "articulate", "compelling", "comprehensive", "consequently", "contextualize", "crucial", "delineate", "elucidate", "emphasize", "fundamental", "inherently", "intricate", "multifaceted", "nuanced", "paradigm", "prevalent", "profound", "sophisticated", "substantiate", "ubiquitous", "underscores"];
+const ORDERED_COHESION_CUES = ["firstly", "secondly", "thirdly", "finally", "moreover", "furthermore", "additionally", "in conclusion", "to conclude", "ultimately"];
+const CLASSIC_LLM_BUZZWORDS: PhraseRule = {
+  id: "classic-llm-buzzword-cluster",
+  label: "Classic LLM buzzword cluster",
+  phrases: ["linguistic odyssey", "delving into", "fostering greater appreciation", "bridging historical theological concepts with contemporary scholarly discourse", "embark on a journey", "testament to the enduring", "interplay between", "profoundly resonates"],
+  threshold: 2,
+  rationale: "The writing combines multiple configured, highly reusable buzzword phrases associated with generically polished LLM-style prose.",
+  question: "Can the student paraphrase these phrases in assignment-specific language and explain where each idea came from?",
+};
+const TAPESTRY_IMAGERY: PhraseRule = {
+  id: "tapestry-odyssey-imagery",
+  label: "Tapestry and odyssey imagery",
+  phrases: ["vast tapestry", "rich tapestry", "tapestry of insights", "amidst this rich tapestry", "tapestries of language and symbolism", "linguistic odyssey"],
+  rationale: "The writing uses a configured broad visual or journey metaphor that can substitute for assignment-specific explanation.",
+  question: "What concrete evidence, source, or observation could replace this broad metaphor?",
+};
+const SECTION_DEFINITIONS = [
+  { label: "Abstract", mode: "descriptive", core: false }, { label: "Overview", mode: "descriptive", core: false }, { label: "Summary", mode: "descriptive", core: false }, { label: "Descriptive Essay", mode: "descriptive", core: false },
+  { label: "Methodology", mode: "method", core: true }, { label: "Research Design", mode: "method", core: true }, { label: "Data Collection", mode: "method", core: true }, { label: "Analysis Plan", mode: "method", core: true },
+  { label: "Research Questions", mode: "proposal", core: true }, { label: "Literature Review", mode: "proposal", core: true }, { label: "Theoretical Framework", mode: "proposal", core: true }, { label: "Expected Outcomes", mode: "proposal", core: true }, { label: "Timeline", mode: "proposal", core: false },
+  { label: "Example Section", mode: "sample", core: false }, { label: "Sample Section", mode: "sample", core: false }, { label: "Mock Section", mode: "sample", core: false }, { label: "Sample Draft", mode: "sample", core: false },
+  { label: "Appendix", mode: "appendix", core: false }, { label: "Proof Texts", mode: "appendix", core: false }, { label: "Scriptural References", mode: "appendix", core: false }, { label: "Supporting Texts", mode: "appendix", core: false },
+  { label: "Introduction", mode: "general", core: false }, { label: "Conclusion", mode: "general", core: false }, { label: "References", mode: "general", core: false },
+] as const;
 
 function countWords(text: string) {
   return text.trim().match(/[A-Za-zÀ-ÖØ-öø-ÿ0-9]+(?:['’-][A-Za-zÀ-ÖØ-öø-ÿ0-9]+)*/g)?.length ?? 0;
@@ -206,6 +231,66 @@ function findUniformSentenceCadence(sourceText: string): MarkerFinding | null {
   return makeFinding({ id: "uniform-sentence-cadence", label: "Uniform sentence cadence", rationale: `${sentences.length} sentences have unusually similar word counts for the essay length.`, sourceText, start: first.start, phrase, question: "Can the student walk through how they drafted and revised the sentence structure in this section?", count: sentences.length, matchPositions: sentences.map((sentence) => sentence.start) });
 }
 
+function findElevatedVocabularyDensity(sourceText: string, lowerText: string): MarkerFinding | null {
+  const matches = ELEVATED_ACADEMIC_TERMS.flatMap((term) => Array.from(lowerText.matchAll(new RegExp(`\\b${term}\\b`, "g"))).map((match) => ({ term, start: match.index ?? 0 })));
+  const uniqueTerms = new Set(matches.map((match) => match.term));
+  if (matches.length < 5 || uniqueTerms.size < 4) return null;
+  const first = matches.sort((a, b) => a.start - b.start)[0];
+  return makeFinding({ id: "elevated-academic-vocabulary", label: "Elevated academic vocabulary density", rationale: `The essay uses ${matches.length} configured elevated academic terms across ${uniqueTerms.size} distinct words.`, sourceText, start: first.start, phrase: first.term, question: "Can the student define or paraphrase the selected vocabulary and explain why each term fits the evidence?", count: matches.length, matchPositions: matches.map((match) => match.start) });
+}
+
+function findOrderedCohesionScaffold(sourceText: string): MarkerFinding | null {
+  const matches = ORDERED_COHESION_CUES.flatMap((cue) => Array.from(sourceText.toLowerCase().matchAll(new RegExp(`(?:^|\\n\\s*\\n|\\n)\\s*${cue.replaceAll(" ", "\\s+")}\\b`, "g"))).map((match) => ({ cue, start: (match.index ?? 0) + match[0].toLowerCase().lastIndexOf(cue) })));
+  if (matches.length < 3) return null;
+  const first = matches.sort((a, b) => a.start - b.start)[0];
+  return makeFinding({ id: "ordered-cohesion-scaffold", label: "Ordered cohesion scaffold", rationale: `The writing begins ${matches.length} sections with formal sequencing or cohesion cues.`, sourceText, start: first.start, phrase: first.cue, question: "How did the student decide on this sequence of claims and evidence, and which transition is most important to the argument?", count: matches.length, matchPositions: matches.map((match) => match.start) });
+}
+
+function findHighSurfacePolishCluster(sourceText: string, wordCount: number, findings: MarkerFinding[], statistics: ReviewStatistics): MarkerFinding | null {
+  const sentenceCount = Array.from(sourceText.matchAll(/[^.!?\n]+[.!?]+/g)).length;
+  const ids = new Set(findings.map((finding) => finding.id));
+  const hasPolishSignal = ids.has("elevated-academic-vocabulary") || ids.has("highly-regular-paragraphs") || ids.has("uniform-sentence-cadence") || ids.has("ordered-cohesion-scaffold");
+  if (wordCount < 200 || sentenceCount < 10 || statistics.mechanicsSignals.total !== 0 || !hasPolishSignal) return null;
+  const firstSentence = sourceText.match(/[^.!?\n]+[.!?]+/)?.[0]?.trim() ?? sourceText.slice(0, 60);
+  return makeFinding({ id: "high-surface-polish-cluster", label: "High surface-polish cluster", rationale: `The essay combines ${wordCount} words, ${sentenceCount} complete sentences, no configured mechanics observations, and at least one elevated vocabulary or regularity signal.`, sourceText, start: sourceText.indexOf(firstSentence), phrase: firstSentence, question: "Can the student describe the drafting stages, revisions, tools, and source notes that produced this final level of polish?", count: 1, matchPositions: [sourceText.indexOf(firstSentence)] });
+}
+
+type SectionMatch = { label: string; mode: string; core: boolean; start: number; phrase: string };
+
+function findRecognizedSectionHeadings(sourceText: string): SectionMatch[] {
+  const matches: SectionMatch[] = [];
+  let cursor = 0;
+  for (const line of sourceText.split("\n")) {
+    const trimmed = line.trim();
+    const candidate = trimmed.replace(/^#{1,6}\s+/, "").replace(/:$/, "").trim();
+    const normalized = candidate.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const definition = SECTION_DEFINITIONS.find((item) => item.label.toLowerCase().replace(/[^a-z0-9]+/g, " ") === normalized);
+    if (definition && candidate.length <= 60 && (trimmed.startsWith("#") || trimmed.endsWith(":") || candidate.length <= 28)) {
+      matches.push({ ...definition, start: cursor + line.indexOf(trimmed), phrase: trimmed });
+    }
+    cursor += line.length + 1;
+  }
+  return matches;
+}
+
+function findRigidProposalTemplate(sourceText: string): MarkerFinding | null {
+  const headings = findRecognizedSectionHeadings(sourceText);
+  const distinct = new Map(headings.map((heading) => [heading.label, heading]));
+  const proposalCore = Array.from(distinct.values()).filter((heading) => heading.core).length;
+  if (distinct.size < 5 || proposalCore < 3) return null;
+  const first = Array.from(distinct.values()).sort((a, b) => a.start - b.start)[0];
+  return makeFinding({ id: "rigid-academic-proposal-template", label: "Rigid academic proposal template", rationale: `The document contains ${distinct.size} distinct recognized section headings, including ${proposalCore} proposal-core headings.`, sourceText, start: first.start, phrase: first.phrase, question: "Does this assignment require a formal proposal structure, and can the student explain how each section was drafted for this specific task?", count: distinct.size, matchPositions: Array.from(distinct.values()).map((heading) => heading.start) });
+}
+
+function findFragmentedDocumentFormat(sourceText: string): MarkerFinding | null {
+  const headings = findRecognizedSectionHeadings(sourceText);
+  const distinct = new Map(headings.map((heading) => [heading.label, heading]));
+  const modes = new Set(Array.from(distinct.values()).filter((heading) => heading.mode !== "general").map((heading) => heading.mode));
+  if (distinct.size < 5 || modes.size < 3) return null;
+  const first = Array.from(distinct.values()).sort((a, b) => a.start - b.start)[0];
+  return makeFinding({ id: "fragmented-multi-document-format", label: "Fragmented multi-document format", rationale: `The document combines ${modes.size} recognized document modes across ${distinct.size} section labels.`, sourceText, start: first.start, phrase: first.phrase, question: "Which single document form does the assignment require, and which sections should be removed, moved, or rewritten to fit it?", count: modes.size, matchPositions: Array.from(distinct.values()).map((heading) => heading.start) });
+}
+
 function getStatistics(sourceText: string, normalizedText: string, findings: MarkerFinding[], wordCount: number): ReviewStatistics {
   const paragraphs = sourceText.split(/\n\s*\n/).map((paragraph) => paragraph.replace(/\s+/g, " ").trim()).filter(Boolean);
   const effectiveParagraphs = paragraphs.length ? paragraphs : normalizedText ? [normalizedText] : [];
@@ -223,9 +308,12 @@ function buildRecommendations(findings: MarkerFinding[], statistics: ReviewStati
   const ids = new Set(findings.map((finding) => finding.id));
   const recommendations: RevisionRecommendation[] = [];
   if (ids.has("markdown-heading-artifacts") || ids.has("markdown-list-artifacts")) recommendations.push({ id: "remove-drafting-format", title: "Revise drafting-format artifacts", detail: "Replace copied Markdown headings or list markers with the format required by the assignment, and ask the student to describe the drafting process." });
-  if (ids.has("stock-academic-phrasing") || ids.has("generic-abstraction-frames") || ids.has("conclusion-template") || ids.has("custom-assignment-phrases")) recommendations.push({ id: "make-language-specific", title: "Replace template language with precise detail", detail: "Choose one matched phrase and rewrite it using a concrete claim, example, source, or observation from the student’s own work." });
+  if (ids.has("classic-llm-buzzword-cluster") || ids.has("tapestry-odyssey-imagery")) recommendations.push({ id: "replace-llm-buzzwords", title: "Replace broad buzzwords with assignment evidence", detail: "Rewrite each matched buzzword or broad metaphor using a concrete source, observation, quotation, or claim from the assignment." });
+  if (ids.has("rigid-academic-proposal-template")) recommendations.push({ id: "check-proposal-structure", title: "Check whether the proposal template fits", detail: "Keep only the sections required by the assignment and ask the student to explain how the remaining structure was developed." });
+  if (ids.has("fragmented-multi-document-format")) recommendations.push({ id: "unify-document-form", title: "Unify the document form", detail: "Choose the assignment’s intended genre, then remove or rewrite unrelated abstract, methodology, sample, or appendix sections." });
+  if (ids.has("stock-academic-phrasing") || ids.has("generic-abstraction-frames") || ids.has("conclusion-template") || ids.has("custom-assignment-phrases") || ids.has("elevated-academic-vocabulary")) recommendations.push({ id: "make-language-specific", title: "Replace template language with precise detail", detail: "Choose one matched phrase and rewrite it using a concrete claim, example, source, or observation from the student’s own work." });
   if (ids.has("formulaic-transitions")) recommendations.push({ id: "vary-connections", title: "Make connections between ideas more direct", detail: "Keep only transitions that clarify the argument. Replace others by naming the relationship between the surrounding claims or evidence." });
-  if (ids.has("paired-balance-templates") || ids.has("repeated-phrase-sequence") || ids.has("highly-regular-paragraphs") || ids.has("uniform-sentence-cadence")) recommendations.push({ id: "discuss-drafting-process", title: "Discuss the drafting and revision process", detail: "Ask the student to explain how they outlined, composed, and revised this section, then vary structure only where it does not serve the assignment." });
+  if (ids.has("paired-balance-templates") || ids.has("repeated-phrase-sequence") || ids.has("highly-regular-paragraphs") || ids.has("uniform-sentence-cadence") || ids.has("ordered-cohesion-scaffold") || ids.has("high-surface-polish-cluster")) recommendations.push({ id: "discuss-drafting-process", title: "Discuss the drafting and revision process", detail: "Ask the student to explain how they outlined, composed, and revised this section, then vary structure only where it does not serve the assignment." });
   if (statistics.mechanicsSignals.total > 0) recommendations.push({ id: "complete-editing-pass", title: "Complete a focused mechanics pass", detail: "Check sentence endings and the capitalization of sentences after terminal punctuation before resubmitting a revision." });
   if (!recommendations.length) recommendations.push({ id: "preserve-evidence", title: "Use context before drawing conclusions", detail: "No configured pattern matched. This does not verify human authorship or rule out writing assistance; compare the work with the assignment and the student’s process." });
   return recommendations.slice(0, 3);
@@ -237,7 +325,7 @@ export function analyzeEssay(text: string, ruleSet: AssignmentRuleSet = SYSTEM_D
   const lowerText = normalizedText.toLowerCase();
   const wordCount = countWords(normalizedText);
   const enabled = new Set(ruleSet.enabledBaseRuleIds);
-  const findings = [
+  const baseFindings = [
     enabled.has("stock-academic-phrasing") ? findPhraseRule(normalizedText, lowerText, STOCK_PHRASES) : null,
     enabled.has("formulaic-transitions") ? findTransitionMarker(normalizedText, lowerText, wordCount) : null,
     enabled.has("generic-abstraction-frames") ? findPhraseRule(normalizedText, lowerText, GENERIC_ABSTRACTION) : null,
@@ -248,12 +336,23 @@ export function analyzeEssay(text: string, ruleSet: AssignmentRuleSet = SYSTEM_D
     enabled.has("markdown-list-artifacts") ? findMarkdownListArtifacts(sourceText) : null,
     enabled.has("highly-regular-paragraphs") ? findRegularParagraphMarker(sourceText) : null,
     enabled.has("uniform-sentence-cadence") ? findUniformSentenceCadence(sourceText) : null,
+    enabled.has("elevated-academic-vocabulary") ? findElevatedVocabularyDensity(sourceText, lowerText) : null,
+    enabled.has("ordered-cohesion-scaffold") ? findOrderedCohesionScaffold(sourceText) : null,
+    enabled.has("classic-llm-buzzword-cluster") ? findPhraseRule(sourceText, sourceText.toLowerCase(), CLASSIC_LLM_BUZZWORDS) : null,
+    enabled.has("tapestry-odyssey-imagery") ? findPhraseRule(sourceText, sourceText.toLowerCase(), TAPESTRY_IMAGERY) : null,
+    enabled.has("rigid-academic-proposal-template") ? findRigidProposalTemplate(sourceText) : null,
+    enabled.has("fragmented-multi-document-format") ? findFragmentedDocumentFormat(sourceText) : null,
     findCustomPhrases(sourceText, sourceText.toLowerCase(), ruleSet.customPhrases),
   ].filter((finding): finding is MarkerFinding => finding !== null);
+  const preliminaryStatistics = getStatistics(sourceText, normalizedText, baseFindings, wordCount);
+  const polishCluster = enabled.has("high-surface-polish-cluster") ? findHighSurfacePolishCluster(sourceText, wordCount, baseFindings, preliminaryStatistics) : null;
+  const findings = [...baseFindings, polishCluster].filter((finding): finding is MarkerFinding => finding !== null);
   const containsRawFormatting = findings.some((finding) => finding.id === "markdown-heading-artifacts" || finding.id === "markdown-list-artifacts");
-  const level: FollowUpLevel = findings.length <= 1 ? (containsRawFormatting ? "some" : "few") : findings.length <= 3 ? "some" : "more";
+  const containsSurfacePolish = findings.some((finding) => finding.id === "high-surface-polish-cluster");
+  const containsStrongPattern = findings.some((finding) => ["classic-llm-buzzword-cluster", "tapestry-odyssey-imagery", "rigid-academic-proposal-template", "fragmented-multi-document-format"].includes(finding.id));
+  const level: FollowUpLevel = findings.length <= 1 ? (containsRawFormatting || containsSurfacePolish || containsStrongPattern ? "some" : "few") : findings.length <= 3 ? "some" : "more";
   const statistics = getStatistics(sourceText, normalizedText, findings, wordCount);
-  const revisionGuidanceSuggested = findings.length >= 2 || statistics.mechanicsSignals.total >= 2 || containsRawFormatting;
+  const revisionGuidanceSuggested = findings.length >= 2 || statistics.mechanicsSignals.total >= 2 || containsRawFormatting || containsSurfacePolish || containsStrongPattern;
   return { wordCount, level, findings, statistics, revisionGuidanceSuggested, recommendations: buildRecommendations(findings, statistics), ruleSetId: ruleSet.id, ruleSetName: ruleSet.name, checkedAt: new Date().toISOString() };
 }
 

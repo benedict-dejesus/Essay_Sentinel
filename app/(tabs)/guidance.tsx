@@ -8,6 +8,10 @@ const rules = [
   ["Repeated structures", "Repeated balanced scaffolds or five-word sequences occurring at least three times."],
   ["Raw Markdown formatting", "Copied # headings or list syntax that may not fit the submitted assignment format."],
   ["Structural regularity", "Unusually even paragraph or sentence lengths that can prompt a discussion of drafting and revision."],
+  ["Classic LLM buzzword clusters", "Configured combinations such as linguistic odyssey, delving into, or fostering greater appreciation."],
+  ["Tapestry and odyssey imagery", "Broad rich-tapestry or journey metaphors that may be replaced with assignment-specific evidence."],
+  ["Rigid academic proposal templates", "A high number of standardized proposal headings, such as research questions, methodology, and expected outcomes."],
+  ["Fragmented document formats", "Mixed abstract, method, proposal, sample, and appendix sections that may not fit one assignment form."],
 ];
 
 export default function GuidanceScreen() {
@@ -28,7 +32,7 @@ export default function GuidanceScreen() {
         <View className="mt-3 rounded-3xl border border-border bg-surface p-5 gap-3"><Text className="text-sm leading-5 text-muted"><Text className="font-semibold text-foreground">Pasted text:</Text> checked directly with the fixed rules in this browser.</Text><Text className="text-sm leading-5 text-muted"><Text className="font-semibold text-foreground">DOCX:</Text> read locally in this browser; the file is not uploaded. For PDFs, paste the essay text into the review form.</Text><Text className="text-sm leading-5 text-muted"><Text className="font-semibold text-foreground">Saved reviews:</Text> stored in this browser and removable from the review detail screen.</Text></View>
 
         <Text className="mt-8 text-lg font-bold text-foreground">Suggested educator workflow</Text>
-        <View className="mt-3 rounded-3xl border border-border bg-surface p-5"><Text className="text-sm leading-6 text-muted">Read the matching excerpt, compare it to assignment expectations and prior work, then ask an open question about the student’s reasoning, source use, formatting, and revision process. A raw Markdown heading can warrant a format conversation, while a polished phrase or regular structure can warrant a process conversation. Document the conversation separately from these automated markers.</Text></View>
+        <View className="mt-3 rounded-3xl border border-border bg-surface p-5"><Text className="text-sm leading-6 text-muted">Read the matching excerpt, compare it to assignment expectations and prior work, then ask an open question about the student’s reasoning, source use, formatting, and revision process. A raw Markdown heading can warrant a format conversation, while buzzword clusters, highly regular prose, or a rigid proposal scaffold can warrant a process conversation. If the text mixes an abstract, methodology, proposal, sample, and appendix, ask which single document form the assignment required. Document the conversation separately from these automated markers.</Text></View>
 
         <Text className="mt-8 text-lg font-bold text-foreground">Open on phone or desktop</Text>
         <View className="mt-3 rounded-3xl border border-border bg-surface p-5"><Text className="text-sm leading-6 text-muted">This version is a static website. Host the project with the included GitHub Pages workflow, then open the published URL in any modern desktop or mobile browser. On a phone, add the browser page to the Home Screen for a quick launch shortcut.</Text></View>

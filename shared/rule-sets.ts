@@ -9,6 +9,13 @@ export const BASELINE_MARKER_OPTIONS = [
   { id: "markdown-list-artifacts", label: "Markdown list artifacts", description: "Raw bullet, task, or numbered Markdown formatting." },
   { id: "highly-regular-paragraphs", label: "Highly regular paragraphs", description: "Four or more substantive paragraphs with tightly clustered lengths." },
   { id: "uniform-sentence-cadence", label: "Uniform sentence cadence", description: "Eight or more sentences with unusually similar lengths." },
+  { id: "elevated-academic-vocabulary", label: "Elevated academic vocabulary", description: "Dense use of a visible list of highly formal academic terms." },
+  { id: "ordered-cohesion-scaffold", label: "Ordered cohesion scaffold", description: "Repeated formal sequence cues at the start of sections." },
+  { id: "high-surface-polish-cluster", label: "High surface-polish cluster", description: "A transparent combination of length, mechanics, and other polished-writing signals." },
+  { id: "classic-llm-buzzword-cluster", label: "Classic LLM buzzword cluster", description: "Multiple configured generic phrases such as linguistic odyssey or delving into." },
+  { id: "tapestry-odyssey-imagery", label: "Tapestry and odyssey imagery", description: "Configured broad visual or journey metaphors, including rich tapestry wording." },
+  { id: "rigid-academic-proposal-template", label: "Rigid academic proposal template", description: "Five or more recognized proposal headings with at least three proposal-core sections." },
+  { id: "fragmented-multi-document-format", label: "Fragmented multi-document format", description: "Recognized headings spanning three or more distinct document-mode groups." },
 ] as const;
 
 export type BaselineRuleId = (typeof BASELINE_MARKER_OPTIONS)[number]["id"];

@@ -120,4 +120,50 @@ describe("deterministic essay marker analysis", () => {
     expect(result.findings).toHaveLength(0);
     expect(result.recommendations[0].detail).toMatch(/does not verify human authorship/i);
   });
+
+  it("surfaces a transparent surface-polish cluster without declaring AI authorship", () => {
+    const result = analyzeEssay(
+      "Firstly, the nuanced proposal offers a comprehensive response to the neighborhood transit problem. The analysis identifies a fundamental connection between reliable buses and access to jobs. A sophisticated map of late routes gives residents a concrete example of the challenge. The writer can substantiate the claim by comparing travel times before and after the schedule change.\n\n" +
+        "Secondly, the multifaceted evidence shows why a single policy cannot solve every concern. A compelling interview with a night-shift worker can contextualize the statistics for a public audience. The proposal may delineate which stops need lighting and which need more frequent service. Consequently, the argument remains focused on a practical outcome rather than a broad promise.\n\n" +
+        "Finally, a profound conclusion can connect the recommendation to the city budget. The writer can emphasize that a transparent timeline helps people evaluate progress. The report can articulate how community feedback changes the next phase of planning. A clear final paragraph can explain why the selected evidence supports the proposed route changes.\n\n" +
+        "In conclusion, the structured essay presents a coherent sequence of claims, examples, and revisions. The student should still be able to explain the sources, wording, and drafting decisions behind the polished final version. The reader can ask which paragraph changed most during revision and why that change improved the argument. The response remains a starting point for an educator conversation rather than an authorship decision.",
+    );
+
+    expect(result.findings.some((item) => item.id === "elevated-academic-vocabulary")).toBe(true);
+    expect(result.findings.some((item) => item.id === "ordered-cohesion-scaffold")).toBe(true);
+    expect(result.findings.some((item) => item.id === "high-surface-polish-cluster")).toBe(true);
+    expect(result.revisionGuidanceSuggested).toBe(true);
+    expect(result.recommendations.some((item) => item.id === "discuss-drafting-process")).toBe(true);
+    expect(result.recommendations.every((item) => !/AI score|authorship conclusion/i.test(item.detail))).toBe(true);
+  });
+
+  it("flags configured tapestry imagery and classic LLM buzzword combinations", () => {
+    const result = analyzeEssay(
+      "In the vast tapestry of religious discourse, the text presents a rich tapestry of insights. " +
+        "This linguistic odyssey involves delving into the sources and fostering greater appreciation for their meaning. " +
+        "The discussion focuses on bridging historical theological concepts with contemporary scholarly discourse.",
+    );
+
+    expect(result.findings.some((item) => item.id === "tapestry-odyssey-imagery")).toBe(true);
+    expect(result.findings.some((item) => item.id === "classic-llm-buzzword-cluster")).toBe(true);
+    expect(result.recommendations.some((item) => item.id === "replace-llm-buzzwords")).toBe(true);
+  });
+
+  it("flags a rigid proposal scaffold and a fragmented mix of document modes", () => {
+    const result = analyzeEssay(
+      "# Abstract\nA brief description of the project.\n\n" +
+        "# Research Questions\nWhat evidence supports the claim?\n\n" +
+        "# Literature Review\nThe review summarizes the relevant sources.\n\n" +
+        "# Theoretical Framework\nThe framework defines the central concepts.\n\n" +
+        "# Methodology\nThe guide lists the proposed collection steps.\n\n" +
+        "# Expected Outcomes\nThe proposal predicts a clear result.\n\n" +
+        "# Example Section\nThis sample shows a possible final paragraph.\n\n" +
+        "# Appendix\nProof Texts and supporting material appear here.",
+    );
+
+    expect(result.findings.some((item) => item.id === "rigid-academic-proposal-template")).toBe(true);
+    expect(result.findings.some((item) => item.id === "fragmented-multi-document-format")).toBe(true);
+    expect(result.recommendations.some((item) => item.id === "check-proposal-structure")).toBe(true);
+    expect(result.recommendations.some((item) => item.id === "unify-document-form")).toBe(true);
+  });
 });

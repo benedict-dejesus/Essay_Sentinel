@@ -1,7 +1,8 @@
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 
+import { DeleteConfirmation } from "@/components/delete-confirmation";
 import { ScreenContainer } from "@/components/screen-container";
 import { useThemeContext } from "@/lib/theme-provider";
 import { deleteRuleSet, getActiveRuleSet, listRuleSets, saveRuleSet, setActiveRuleSet } from "@/lib/rule-set-storage";
@@ -16,6 +17,8 @@ export default function SettingsScreen() {
   const [draft, setDraft] = useState<AssignmentRuleSetDraft | null>(null);
   const [phrasesInput, setPhrasesInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pendingDeletion, setPendingDeletion] = useState<AssignmentRuleSet | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     const [sets, active] = await Promise.all([listRuleSets(), getActiveRuleSet()]);
@@ -54,11 +57,17 @@ export default function SettingsScreen() {
     setActiveId(id);
   };
 
-  const confirmDelete = (set: AssignmentRuleSet) => {
-    Alert.alert(`Delete “${set.name}”?`, "This removes the local assignment profile. Existing saved reviews will retain their recorded rule-set name.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => { await deleteRuleSet(set.id); setDraft(null); await load(); } },
-    ]);
+  const deletePendingRuleSet = async () => {
+    if (!pendingDeletion) return;
+    setDeleting(true);
+    try {
+      await deleteRuleSet(pendingDeletion.id);
+      setDraft(null);
+      setPendingDeletion(null);
+      await load();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (draft) {
@@ -85,7 +94,8 @@ export default function SettingsScreen() {
       <View className="mt-7 rounded-3xl border border-border bg-surface p-5"><Text className="text-lg font-bold text-foreground">Appearance</Text><Text className="mt-1 text-sm leading-5 text-muted">Choose the display setting that is most comfortable for reviewing student work.</Text><View className="mt-4 flex-row gap-3">{(["light", "dark"] as const).map((scheme) => { const active = colorScheme === scheme; return <TouchableOpacity key={scheme} onPress={() => setColorScheme(scheme)} className={`flex-1 rounded-2xl border p-4 active:opacity-80 ${active ? "border-primary bg-background" : "border-border bg-background"}`}><View className="flex-row items-center justify-between"><View><Text className="text-base font-bold text-foreground">{scheme === "light" ? "Light" : "Dark"}</Text><Text className="mt-1 text-xs leading-4 text-muted">{scheme === "light" ? "Soft rose canvas" : "Deep teal canvas"}</Text></View><View className={`h-7 w-7 items-center justify-center rounded-full ${active ? "bg-primary" : "bg-border"}`}><Text className="text-sm font-bold text-onPrimary">{active ? "✓" : ""}</Text></View></View></TouchableOpacity>; })}</View></View>
       <TouchableOpacity onPress={() => beginEdit()} className="mt-6 flex-row items-center justify-between rounded-3xl bg-primary px-5 py-5 active:opacity-85"><View><Text className="text-lg font-bold text-onPrimary">Create a rule set</Text><Text className="mt-1 text-sm text-onPrimary opacity-80">Pick categories and add exact phrases</Text></View><Text className="text-3xl text-onPrimary">＋</Text></TouchableOpacity>
       <Text className="mt-8 mb-3 text-lg font-bold text-foreground">Available profiles</Text>
-      <View className="gap-3">{ruleSets.map((set) => { const active = set.id === activeId; return <View key={set.id} className={`rounded-3xl border p-5 ${active ? "border-primary bg-background" : "border-border bg-surface"}`}><TouchableOpacity onPress={() => void selectActive(set.id)} className="active:opacity-75"><View className="flex-row items-start justify-between gap-3"><View className="flex-1"><Text className="text-base font-bold text-foreground">{set.name}</Text><Text className="mt-1 text-sm leading-5 text-muted">{set.description || "No description added."}</Text></View><View className={`rounded-full px-3 py-1 ${active ? "bg-primary" : "bg-border"}`}><Text className={`text-xs font-bold ${active ? "text-onPrimary" : "text-muted"}`}>{active ? "Active" : "Use"}</Text></View></View><View className="mt-4 flex-row gap-4"><Text className="text-xs font-semibold text-muted">{set.enabledBaseRuleIds.length} baseline checks</Text><Text className="text-xs font-semibold text-muted">{set.customPhrases.length} custom phrases</Text></View></TouchableOpacity>{!set.isSystem ? <View className="mt-4 flex-row gap-3"><TouchableOpacity onPress={() => beginEdit(set)} className="rounded-xl border border-primary bg-background px-4 py-2.5 active:opacity-75"><Text className="text-sm font-semibold text-primary">Edit</Text></TouchableOpacity><TouchableOpacity onPress={() => confirmDelete(set)} className="rounded-xl border border-error bg-surface px-4 py-2.5 active:opacity-75"><Text className="text-sm font-semibold text-error">Delete</Text></TouchableOpacity></View> : <Text className="mt-4 text-xs leading-5 text-muted">The general profile remains available as a non-editable baseline.</Text>}</View>; })}</View>
+      {pendingDeletion ? <View className="mb-3"><DeleteConfirmation title={`Delete “${pendingDeletion.name}”?`} detail="This removes the local assignment profile. Existing saved reviews retain their recorded profile name." confirmLabel="Delete rule set" busy={deleting} onCancel={() => setPendingDeletion(null)} onConfirm={() => void deletePendingRuleSet()} /></View> : null}
+      <View className="gap-3">{ruleSets.map((set) => { const active = set.id === activeId; return <View key={set.id} className={`rounded-3xl border p-5 ${active ? "border-primary bg-background" : "border-border bg-surface"}`}><TouchableOpacity onPress={() => void selectActive(set.id)} className="active:opacity-75"><View className="flex-row items-start justify-between gap-3"><View className="flex-1"><Text className="text-base font-bold text-foreground">{set.name}</Text><Text className="mt-1 text-sm leading-5 text-muted">{set.description || "No description added."}</Text></View><View className={`rounded-full px-3 py-1 ${active ? "bg-primary" : "bg-border"}`}><Text className={`text-xs font-bold ${active ? "text-onPrimary" : "text-muted"}`}>{active ? "Active" : "Use"}</Text></View></View><View className="mt-4 flex-row gap-4"><Text className="text-xs font-semibold text-muted">{set.enabledBaseRuleIds.length} baseline checks</Text><Text className="text-xs font-semibold text-muted">{set.customPhrases.length} custom phrases</Text></View></TouchableOpacity>{!set.isSystem ? <View className="mt-4 flex-row gap-3"><TouchableOpacity onPress={() => beginEdit(set)} className="rounded-xl border border-primary bg-background px-4 py-2.5 active:opacity-75"><Text className="text-sm font-semibold text-primary">Edit</Text></TouchableOpacity><TouchableOpacity onPress={() => setPendingDeletion(set)} className="rounded-xl border border-error bg-surface px-4 py-2.5 active:opacity-75"><Text className="text-sm font-semibold text-error">Delete</Text></TouchableOpacity></View> : <Text className="mt-4 text-xs leading-5 text-muted">The general profile remains available as a non-editable baseline.</Text>}</View>; })}</View>
     </ScrollView>
   </ScreenContainer>;
 }

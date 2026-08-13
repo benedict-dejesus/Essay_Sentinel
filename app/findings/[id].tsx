@@ -1,7 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from "react-native";
 
+import { DeleteConfirmation } from "@/components/delete-confirmation";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { FOLLOW_UP_COPY } from "@/shared/essay-analysis";
@@ -17,10 +18,21 @@ export default function FindingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [review, setReview] = useState<SavedReview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const load = useCallback(async () => { if (!id) return; setLoading(true); setReview(await getReview(id)); setLoading(false); }, [id]);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-  const confirmDelete = () => Alert.alert("Delete this review?", "This removes the saved text and findings from this device.", [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: async () => { if (id) { await removeReview(id); router.replace("/"); } } }]);
+  const deleteReview = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await removeReview(id);
+      router.replace("/");
+    } finally {
+      setDeleting(false);
+    }
+  };
   if (loading) return <ScreenContainer className="items-center justify-center"><ActivityIndicator color={colors.primary} /></ScreenContainer>;
   if (!review) return <ScreenContainer className="items-center justify-center px-8"><Text className="text-center text-base text-muted">This saved review is no longer available.</Text><TouchableOpacity onPress={() => router.replace("/")} className="mt-5 rounded-xl bg-primary px-5 py-3"><Text className="font-semibold text-white">Return to queue</Text></TouchableOpacity></ScreenContainer>;
 
@@ -35,7 +47,8 @@ export default function FindingsScreen() {
       keyExtractor={(item) => item.id}
       contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32, width: "100%", maxWidth: 920, alignSelf: "center" }}
       ListHeaderComponent={<View>
-        <View className="pt-3 pb-6 flex-row items-center justify-between"><TouchableOpacity onPress={() => router.back()} className="rounded-full bg-surface px-4 py-2 active:opacity-70"><Text className="text-sm font-semibold text-foreground">Back</Text></TouchableOpacity><TouchableOpacity onPress={confirmDelete} className="rounded-full px-3 py-2 active:opacity-70"><Text className="text-sm font-semibold text-error">Delete</Text></TouchableOpacity></View>
+        <View className="pt-3 pb-6 flex-row items-center justify-between"><TouchableOpacity onPress={() => router.back()} className="rounded-full bg-surface px-4 py-2 active:opacity-70"><Text className="text-sm font-semibold text-foreground">Back</Text></TouchableOpacity><TouchableOpacity onPress={() => setDeletePending(true)} className="rounded-full px-3 py-2 active:opacity-70"><Text className="text-sm font-semibold text-error">Delete</Text></TouchableOpacity></View>
+        {deletePending ? <View className="mb-5"><DeleteConfirmation title="Delete this review?" detail="This removes the saved text and findings from this browser." confirmLabel="Delete review" busy={deleting} onCancel={() => setDeletePending(false)} onConfirm={() => void deleteReview()} /></View> : null}
         <Text className="text-sm font-semibold text-muted">{review.sourceName}</Text><Text className="mt-1 text-3xl font-bold tracking-tight text-foreground">{review.title}</Text>{review.studentReference ? <Text className="mt-1 text-base text-muted">{review.studentReference}</Text> : null}<View className="mt-3 self-start rounded-full bg-[#EEECFF] px-3 py-1"><Text className="text-xs font-bold text-primary">Profile: {review.ruleSetName}</Text></View>
         <View className={`mt-6 rounded-3xl border p-5 ${accent}`}><Text className="text-sm font-semibold text-primary">Deterministic review</Text><Text className="mt-1 text-2xl font-bold text-foreground">{copy.title}</Text><Text className="mt-2 text-sm leading-5 text-muted">{copy.detail}</Text><View className="mt-4 flex-row gap-6"><Text className="text-sm font-medium text-foreground">{review.wordCount} words</Text><Text className="text-sm font-medium text-foreground">{review.findings.length} categories</Text></View></View>
         <View className={`mt-4 rounded-2xl border bg-surface p-4 ${review.revisionGuidanceSuggested ? "border-warning" : "border-success"}`}><Text className="text-sm font-bold text-foreground">{statusTitle}</Text><Text className="mt-1 text-sm leading-5 text-muted">{statusDetail}</Text></View>

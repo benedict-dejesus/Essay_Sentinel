@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { analyzeEssay, type EssayReview } from "@/shared/essay-analysis";
+import { analyzeEssay, type EssayReview } from "../shared/essay-analysis";
 
 const STORAGE_KEY = "essay-sentinel.saved-reviews.v1";
 const ANALYSIS_VERSION = 2;
