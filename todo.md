@@ -1,0 +1,43 @@
+# Project TODO
+
+- [x] Superseded: define the responsible AI-review result model and deterministic fallback analysis
+- [x] Build the educator review queue and recent-review storage
+- [x] Build the paste-and-review essay workflow with validation
+- [x] Superseded: build the non-deterministic AI-assisted analysis endpoint
+- [x] Present transparent findings, excerpts, and educator follow-up prompts
+- [x] Add a guidance screen that explains limitations and responsible use
+- [x] Apply the Essay Sentinel visual theme and mobile navigation
+- [x] Generate and install custom application branding assets
+- [x] Add deterministic tests for core analysis behavior
+- [x] Test transient document extraction for supported document formats
+- [x] Verify the primary mobile flows and resolve implementation issues
+- [x] Replace AI inference with explainable deterministic language-marker analysis
+- [x] Support local PDF and DOCX file selection alongside text pasting
+- [x] Show document-import limitations and privacy-preserving local processing notes
+- [x] Provide marker-level rationales rather than a claim of AI authorship
+- [x] Add explainable review statistics for markers, language patterns, and grammar-style signals
+- [x] Add deterministic revision recommendations linked to the statistics and marker findings
+- [x] Adapt review summaries and findings for desktop-width layouts while retaining one-handed mobile use
+- [x] Document ZIP download and supported mobile-installer generation steps
+- [x] Optimize generated branding assets so the portable project version can be saved
+- [x] Define responsive review statistics and non-punitive revision-status boundaries
+- [x] Validate statistics and revision-guidance thresholds with deterministic tests
+- [x] Define educator-facing assignment marker-rule presets and custom phrase boundaries
+- [x] Store, create, edit, select, and delete assignment-specific rule sets locally
+- [x] Apply the selected assignment rule set to the deterministic essay review
+- [x] Build a settings panel for assignment rule-set management
+- [x] Add deterministic tests for custom rule-set persistence and analysis behavior
+- [x] Define educator-facing assignment marker-rule presets and custom phrase boundaries
+- [x] Define requested palette tokens with accessible light and dark contrast roles
+- [x] Add a persisted light/dark appearance preference control in Settings
+- [x] Apply the #015061, #00C18E, #002C39, and #FFF7F7 visual system across the app
+- [x] Refine hierarchy, spacing, alignment, and visual grouping on primary screens
+- [x] Add a mobile installation and launch guide for educators
+- [x] Test appearance preference persistence and final interface behavior
+- [x] Define requested palette tokens with accessible light and dark contrast roles
+- [x] Define browser-only document import boundaries and GitHub Pages static architecture
+- [x] Replace server-dependent document extraction with browser-compatible import behavior
+- [x] Configure an Expo web static export for repository-hosted deployment
+- [x] Add a GitHub Pages workflow and deployment guidance for the user’s future repository
+- [x] Validate the production browser build and static asset paths
+- [x] Define browser-only document import boundaries and GitHub Pages static architecture
